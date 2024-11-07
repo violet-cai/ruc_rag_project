@@ -1,0 +1,1 @@
+generator_model_name = 'model/Qwen/Qwen2.5-3B-Instruct'
