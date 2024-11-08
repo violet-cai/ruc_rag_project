@@ -4,14 +4,13 @@ import pickle
 import faiss
 import jieba
 import numpy as np
-from FlagEmbedding import LightWeightFlagLLMReranker, FlagModel
+from FlagEmbedding import FlagModel, FlagReranker
 from rank_bm25 import BM25Okapi
 
 
 # retriever_model_path = 'model/BAAI/bge-base-zh-v1.5'
-# reranker_model_path = 'model/BAAI/bge-reranker-v2.5-gemma2-lightweight'
+# reranker_model_path = 'model/BAAI/bge-reranker-v2-m3'
 
-# TODO: 切分器没做，reranker没测试能否跑
 
 class BM25Retriever:
     def __init__(self, config):
@@ -58,7 +57,7 @@ class BM25Retriever:
             tokenized_query = list(jieba.cut(query))
             scores = self.model.get_scores(tokenized_query)
             top_k_indices = np.argsort(-scores)[:self.top_k]
-            top_k_texts = [(corpus_split[i], scores[i]) for i in top_k_indices]
+            top_k_texts = [(corpus_split[i]) for i in top_k_indices]
             results.append(top_k_texts)
         return results
 
@@ -88,24 +87,25 @@ class DenseRetriever:
                 faiss.write_index(self.vectordb, self.db_file)
         scores, top_k_indices = self.vectordb.search(query_embeddings.astype('float32'), k=self.top_k)
         results = []
-        for i, indices in enumerate(top_k_indices):
-            top_texts = [(corpus_split[j], scores[i, idx]) for idx, j in enumerate(indices)]
+        for indices in top_k_indices:
+            top_texts = [(corpus_split[j]) for j in indices]
             results.append(top_texts)
         return results
 
 
 class Reranker:
     def __init__(self, config, model_path):
-        self.model = LightWeightFlagLLMReranker(model_path, use_fp16=True)
+        self.model = FlagReranker(model_path, use_fp16=True)
         self.top_k = 1
 
-    def rerank(self, query, retrieved_list):
-        scores = self.model.compute_score([query, retrieved_list],
-                                          cutoff_layers=[28], compress_ratio=2,
-                                          compress_layer=[24, 40])
-        top_k_indices = np.argsort(-scores, axis=1)[:, :self.top_k]
+    def rerank(self, query_list, retrieved_list):
         results = []
-        for i, indices in enumerate(top_k_indices):
-            top_texts = [(retrieved_list[j], scores[i, j]) for j in indices]
-            results.append(top_texts)
+        for query, texts in zip(query_list, retrieved_list):
+            inputs = [[query, text] for text in texts]
+            scores = self.model.compute_score(inputs)
+            scores = np.array(scores)
+            sorted_indices = (-scores).argsort()[:self.top_k]
+            sorted_indices = sorted_indices.flatten().tolist()
+            top_results = [texts[i] for i in sorted_indices]
+            results.append(top_results)
         return results
