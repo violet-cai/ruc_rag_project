@@ -16,7 +16,7 @@ class BM25Retriever:
     def __init__(self, config):
         self.tokenized_text = None
         self.model = None
-        self.top_k = 3
+        self.top_k = 8
         self.tokenized_text_file = 'data/database/tokenized_text.pkl'
         self.bm25_model_file = 'data/database/model.pkl'
 
@@ -65,7 +65,7 @@ class BM25Retriever:
 class DenseRetriever:
     def __init__(self, config, query_instruction, model_path):
         self.model = FlagModel(model_path, query_instruction_format=query_instruction, use_fp16=True)
-        self.top_k = 3
+        self.top_k = 8
         self.db_file = 'data/database/vector_db.index'
         self.vectordb = None
 
@@ -96,7 +96,7 @@ class DenseRetriever:
 class Reranker:
     def __init__(self, config, model_path):
         self.model = FlagReranker(model_path, use_fp16=True)
-        self.top_k = 1
+        self.top_k = 2
 
     def rerank(self, query_list, retrieved_list):
         results = []
