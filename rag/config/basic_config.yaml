@@ -1,0 +1,28 @@
+data_path: "data/"
+save_path: "output/"
+random_seed: 42
+
+# device
+gpu_id: [ 0,1,2,3 ]
+
+#dataset
+corpus_path: "data/corpus/dataset.json"
+qa_path: "data/corpus/qa.json"
+
+# database_config
+db_name: "my_db"
+db_uri: "./milvus.db"
+db_host: "localhost"
+db_port: "19530"
+
+# retriever
+embedding_model: "BAAI/bge-m3"
+retriever_topk: 20
+rrf_k: 60
+
+# rerank
+rerank_model: "BAAI/bge-reranker-v2-m3"
+rerank_topk: 5
+
+#generate
+generate_model: "Qwen/Qwen2.5-3B-Instruct"

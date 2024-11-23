@@ -1,7 +1,7 @@
 import ollama
 
 
-def parse_query(query: object) -> object:
+def parse_query(query):
     prompt = """
         你的任务是参考已有信息来解决用户问题。
         通过将用户问题拆分成能够通过搜索回答的多个子问题，每个搜索的问题应该是一个单一问题。
@@ -27,15 +27,3 @@ def parse_query(query: object) -> object:
             }
         }
         """
-    stream = ollama.chat(
-        model='qwen2.5:3b',
-        messages=[
-            {'role': 'user', 'content': query},
-            {'role': 'system', 'content': prompt}
-        ],
-        stream=True,
-    )
-    res = ''
-    for chunk in stream:
-        res += chunk['message']['content']
-    return res

@@ -25,10 +25,8 @@ class Config:
         self.external_config = self._get_external_config()
         # 结合内部配置和外部配置
         self.final_config = self._get_final_config()
-        # 尽量使用gpu
         self._init_device()
         self._set_seed()
-        self._check_final_config()
 
     def __getitem__(self, item):
         return self.final_config.get(item)
@@ -86,8 +84,9 @@ class Config:
         return old_dict
 
     def _get_internal_config(self):
-        config_file = 'rag/config/config.yaml'
-        return self._load_file_config(config_file)
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        internal_config = os.path.join(current_path, "basic_config.yaml")
+        return self._load_file_config(internal_config)
 
     def _get_external_config(self):
         external_config = dict()
@@ -108,18 +107,10 @@ class Config:
             self.final_config["device"] = torch.device("cpu")
 
     def _set_seed(self):
-        seed_value = self.final_config["seed"]
+        seed_value = self.final_config["random_seed"]
         np.random.seed(seed_value)
         torch.manual_seed(seed_value)
         torch.cuda.manual_seed(seed_value)
         torch.cuda.manual_seed_all(seed_value)
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
-
-    def _check_final_config(self):
-        split = self.final_config["split"]
-        if split is None:
-            split = ["train", "dev", "test"]
-        if isinstance(split, str):
-            split = [split]
-        self.final_config["split"] = split
