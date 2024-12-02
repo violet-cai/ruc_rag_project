@@ -1,2 +1,5 @@
-def get_retrieved_data(query: str) -> list[str]:
-    return [query]
+import importlib
+
+
+def get_retriever(config):
+    return getattr(importlib.import_module("rag.retriever"), "Retriever")(config)

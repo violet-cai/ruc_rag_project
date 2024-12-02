@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from FlagEmbedding import FlagReranker
 
-from rag.config.configuration import Config
+from rag.config.config import Config
 
 
 class Reranker:
@@ -13,6 +13,7 @@ class Reranker:
         self.model = FlagReranker(config["rerank_model"])
 
     def _rerank_single_query(self, query: str, docs: List[str]) -> List[str]:
+        # 对每个query的候选文档进行重排
         pairs = [(query, doc) for doc in docs]
         scores = self.model.compute_score(pairs, normalize=True)
         if isinstance(scores, np.ndarray):
@@ -23,6 +24,7 @@ class Reranker:
         return reranked_docs
 
     def rerank(self, query_list: List[str], retrieved_list: List[List[str]]) -> List[List[str]]:
+        # 多线程重排
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(self._rerank_single_query, query, docs) for query, docs in
                        zip(query_list, retrieved_list)]
