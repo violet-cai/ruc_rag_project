@@ -26,7 +26,9 @@ class Reranker:
     def rerank(self, query_list: List[str], retrieved_list: List[List[str]]) -> List[List[str]]:
         # 多线程重排
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self._rerank_single_query, query, docs) for query, docs in
-                       zip(query_list, retrieved_list)]
+            futures = [
+                executor.submit(self._rerank_single_query, query, docs)
+                for query, docs in zip(query_list, retrieved_list)
+            ]
             results = [future.result() for future in futures]
         return results
