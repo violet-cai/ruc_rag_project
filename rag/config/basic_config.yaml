@@ -14,6 +14,10 @@ db_name: "my_db"
 db_uri: "./milvus.db"
 db_host: "localhost"
 db_port: "19530"
+db_collection_name: "CustomRegulations"
+db_output_fields: ["content"]
+db_index_fields: ["dense_vector","sparse_vector"]
+db_chunk_size: 256
 
 # retriever
 embedding_model: "BAAI/bge-m3"
