@@ -8,9 +8,11 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from rag.database.milvus import MilvusClientWrapper,MilvusService
-from rag.config.configuration import Config
+from rag.config.config import Config
+from rag.database.chunk import chunk_data
 from pymilvus import model
 from tqdm import tqdm
+
 
 # config
 config = Config()
@@ -20,7 +22,7 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 import torch
 torch.cuda.empty_cache()  # 清空CUDA缓存
 # 初始化客户端和服务端
-client = MilvusClientWrapper()
+client = MilvusClientWrapper(host=config["db_host"], port=config["db_port"])
 # embedding_model = BGEM3FlagModel(config["embedding_model"])
 # embedding_model = ""
 embedding_model = model.hybrid.BGEM3EmbeddingFunction(return_sparse=True, return_dense=True, return_colbert_vecs=True)
@@ -41,10 +43,10 @@ info_dict = {
     }
 
 # 创建表
-collection_name = "CustomRegulations"
+collection_name = config["db_collection_name"]
 # milvus数据库好像不能存储colbert_vecs，只能存储dense_vector和sparse_vector
 # 先实现dense_vector和sparse_vector的存储和检索
-index_field_names = ["dense_vector","sparse_vector"]
+index_field_names = config["db_index_fields"]
 service.create_collection(collection_name,info_dict,index_field_names)
 
 # 构建JSON文件的相对路径
@@ -53,13 +55,17 @@ json_path = "data/regulations.json"
 with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
+# 分割text
+chunked_data = chunk_data(data, config)
+
 # 插入数据
-data = data[:100]
+# 100 为例
+chunked_data = chunked_data[:100]
 # 插入数据并显示进度条
 batch_size = 10  
-total_batches = len(data) // batch_size + (1 if len(data) % batch_size != 0 else 0)
+total_batches = len(chunked_data) // batch_size + (1 if len(chunked_data) % batch_size != 0 else 0)
 
 for i in tqdm(range(total_batches), desc="Inserting data"):
-    batch_data = data[i * batch_size:(i + 1) * batch_size]
+    batch_data = chunked_data[i * batch_size:(i + 1) * batch_size]
     
     
