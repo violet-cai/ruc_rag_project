@@ -28,7 +28,7 @@ client = MilvusClientWrapper()
 # embedding_model = BGEM3FlagModel(config["embedding_model"])
 # embedding_model = ""
 embedding_model = model.hybrid.BGEM3EmbeddingFunction(
-    device="cpu", use_fp16=False, return_sparse=True, return_dense=True, return_colbert_vecs=False
+    devices="cpu", use_fp16=False, return_sparse=True, return_dense=True, return_colbert_vecs=False
 )
 service = MilvusService(client, embedding_model)
 
@@ -54,7 +54,7 @@ index_field_names = config["db_index_fields"]
 service.create_collection(collection_name, info_dict, index_field_names)
 
 # 构建JSON文件的相对路径
-json_path = "data/regulations_with_metadata.json"
+json_path = "data/regulations.json"
 # 读取JSON文件
 with open(json_path, "r", encoding="utf-8") as f:
     data = json.load(f)
@@ -71,3 +71,11 @@ total_batches = len(chunked_data) // batch_size + (1 if len(chunked_data) % batc
 
 for i in tqdm(range(total_batches), desc="Inserting data"):
     batch_data = chunked_data[i * batch_size : (i + 1) * batch_size]
+    embeddings = [embedding_model.encode_queries([item["content"]]) for item in batch_data]
+    data = batch_data
+    for i, item in enumerate(data):
+        item["dense_vector"] = embeddings[i]["dense"][0]
+        item["sparse_vector"] = embeddings[i]["sparse"]
+        if "id" in item:
+            del item["id"]
+    client.insert_data(collection_name, data)

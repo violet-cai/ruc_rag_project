@@ -21,12 +21,12 @@ db_chunk_size: 256
 
 # retriever
 embedding_model: "BAAI/bge-m3"
-retriever_topk: 20
+retriever_topk: 5
 rrf_k: 60
 
 # rerank
 rerank_model: "BAAI/bge-reranker-v2-m3"
-rerank_topk: 5
+reranker_topk: 2
 
 #generate
-generate_model: "Qwen/Qwen2.5-3B-Instruct"
+generate_model: "Qwen/Qwen2.5-0.5B-Instruct"

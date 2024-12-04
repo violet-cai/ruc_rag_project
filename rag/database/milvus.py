@@ -6,7 +6,7 @@ from typing import Union
 #  客户端
 class MilvusClientWrapper:
     def __init__(self, uri="my_db.db"):
-        self.client = MilvusClient(uri=uri)
+        self.client = MilvusClient(uri)
         db_logger.info(f"Milvus 连接")
 
     def create_collection(self, collection_name, schema):
@@ -36,7 +36,7 @@ class MilvusClientWrapper:
                 # 稠密向量索引
                 else:
                     index_params.add_index(
-                        field_name=field_name, index_type="FLAT", metric_type="L2", params={"nlist": 1024}
+                        field_name=field_name, index_type="HNSW", metric_type="IP", params={"nlist": 1024}
                     )
             self.client.create_index(collection_name=collection_name, index_params=index_params)
             db_logger.info(f"collection: {collection_name} 的索引创建成功")
@@ -116,7 +116,7 @@ class MilvusService:
 
     def search(self, collection_name: str, query_embedding: list, topk: int, search_by: str, output_fields: list):
         if search_by == "dense":
-            search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
+            search_params = {"metric_type": "IP", "params": {"nprobe": 10}}
             search_field = "dense_vector"
         elif search_by == "sparse":
             search_params = {"metric_type": "IP", "params": {"drop_ratio_search": 0.2}}

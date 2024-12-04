@@ -10,7 +10,7 @@ from rag.config.config import Config
 class Reranker:
     def __init__(self, config: Config):
         self.topk = config["reranker_topk"]
-        self.model = FlagReranker(config["rerank_model"])
+        self.model = FlagReranker(config["rerank_model"], devices="cpu")
 
     def _rerank_single_query(self, query: str, docs: List[str]) -> List[str]:
         # 对每个query的候选文档进行重排
@@ -21,7 +21,7 @@ class Reranker:
         scored_docs = list(zip(docs, scores))
         scored_docs.sort(key=lambda x: x[1], reverse=True)
         reranked_docs = [doc for doc, _ in scored_docs]
-        return reranked_docs
+        return reranked_docs[: self.topk]
 
     def rerank(self, query_list: List[str], retrieved_list: List[List[str]]) -> List[List[str]]:
         # 多线程重排
