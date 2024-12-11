@@ -3,7 +3,7 @@ save_path: "output/"
 random_seed: 42
 
 # device
-gpu_id: [0]
+gpu_id: [ 0,1,2,3 ]
 
 #dataset
 corpus_path: "data/corpus/dataset.json"
@@ -16,17 +16,30 @@ db_host: "localhost"
 db_port: "19530"
 db_collection_name: "CustomRegulations"
 db_output_fields: ["content"]
-db_index_fields: ["dense_vector", "sparse_vector"]
+db_index_fields: ["dense_vector","sparse_vector"]
 db_chunk_size: 256
 
 # retriever
 embedding_model: "BAAI/bge-m3"
-retriever_topk: 5
+retriever_topk: 20
 rrf_k: 60
 
 # rerank
 rerank_model: "BAAI/bge-reranker-v2-m3"
-reranker_topk: 2
+rerank_topk: 5
 
 #generate
-generate_model: "Qwen/Qwen2.5-0.5B-Instruct"
+generate_model: "Qwen/Qwen2.5-3B-Instruct"
+
+
+# -------------------------------------------------Evaluation Settings------------------------------------------------#
+# Metrics to evaluate the result
+metrics: [ 'f1','em','bleu','acc','precision','recall','rouge-1','rouge-2','rouge-l','retrieval_recall','retrieval_precision']
+# Specify setting for metric, will be called within certain metrics
+metric_setting:
+  bleu_max_order: 4
+  bleu_smooth: False
+  retrieval_recall_topk: 2
+  #tokenizer_name: "gpt-4"
+save_metric_score: True #　whether to save the metric score into txt file
+save_intermediate_data: False
