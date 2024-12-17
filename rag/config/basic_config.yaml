@@ -8,6 +8,9 @@ gpu_id: [ 0]
 #dataset
 corpus_path: "data/corpus/dataset.json"
 qa_path: "data/corpus/qa.json"
+stopword_path: "data/stopwords.txt"
+dict_path: "data/dataset_dict.txt"
+
 
 # database_config
 db_name: "my_db"
@@ -23,7 +26,7 @@ db_chunk_size: 256
 embedding_model: "BAAI/bge-m3"
 retriever_topk: 5
 rrf_k: 60
-
+fields_to_search: ["metadata"]
 # rerank
 rerank_model: "BAAI/bge-reranker-v2-m3"
 rerank_topk: 2

@@ -17,7 +17,7 @@ from rag.retriever.utils import get_retriever
 from pymilvus import model
 
 
-query = "检疫条例有哪些"
+query = "我想了解香港和澳门享受零关税货物原产地标准有哪些？"
 embedding_model = model.hybrid.BGEM3EmbeddingFunction(
     devices="cuda:0", return_sparse=True, return_dense=True, return_colbert_vecs=False
 )
@@ -27,6 +27,7 @@ config = Config()
 
 retriever = get_retriever(config)
 retrieved_list = retriever.retrieve(query)
+retrieved_list1 = retriever.retrieve_with_keywords(query) # 关键词检索
 print(retrieved_list)
 
 reranker = get_reranker(config)
