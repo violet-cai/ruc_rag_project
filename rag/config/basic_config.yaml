@@ -3,7 +3,8 @@ save_path: "output/"
 random_seed: 42
 
 # device
-gpu_id: [ 0]
+# gpu_id: [0]
+gpu_id: 0
 
 #dataset
 corpus_path: "data/corpus/dataset.json"
@@ -14,13 +15,19 @@ dict_path: "data/dataset_dict.txt"
 
 # database_config
 db_name: "my_db"
-db_uri: "./milvus.db"
-db_host: "localhost"
-db_port: "19530"
-db_collection_name: "CustomRegulations"
+# db_uri: "./milvus.db" 
+db_uri: "http://localhost:19530"
+db_collection_name: "regulation"
 db_output_fields: ["content"]
 db_index_fields: ["dense_vector","sparse_vector"]
 db_chunk_size: 256
+db_embedding_dim: 1024
+db_text_id: "text_id"
+db_content_key: "content"
+db_appendix_content_key: "appendix_content"
+db_metadata_key: "metadata"
+db_sparse_index_type: "SPARSE_INVERTED_INDEX"
+db_dense_index_type: "IVF_FLAT"
 
 # retriever
 embedding_model: "BAAI/bge-m3"
