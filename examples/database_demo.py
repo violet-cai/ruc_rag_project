@@ -22,60 +22,48 @@ import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 import torch
 
-torch.cuda.empty_cache()  # 清空CUDA缓存
-# 初始化客户端和服务端
-client = MilvusClientWrapper()
-# embedding_model = BGEM3FlagModel(config["embedding_model"])
-# embedding_model = ""
-embedding_model = model.hybrid.BGEM3EmbeddingFunction(
-    devices="cpu", use_fp16=False, return_sparse=True, return_dense=True, return_colbert_vecs=False
-)
-service = MilvusService(client, embedding_model)
+path_regu = 'data/regulations_with_metadata.json'
+path_qa = 'data/QA_filtered.json'
 
-# 表结构
-info_dict = {
-    "document_type": "",  # 法规类型
-    "category": "",  # 法规类别
-    "announcement_number": "",  # 文号
-    "issuing_authority": "",  # 发布机构
-    "issue_date": "",  # 发布日期
-    "effective_date": "",  # 生效日期
-    "status": "",  # 效力
-    "remarks": "",  # 效力说明
-    "title": "",  # 标题
-    "content": "",  # 内容
-}
+with open(path_regu, "r", encoding='utf-8') as file:
+	data_regulation = json.loads(file.read())
+ 
+with open(path_qa, "r", encoding='utf-8') as file:
+	data_qa = json.loads(file.read())
+ 
+config = Config()
+# embedding_model = model.hybrid.BGEM3EmbeddingFunction(return_sparse=True, return_dense=True, return_colbert_vecs=True)
+wrapper = MilvusClientWrapper(config)
 
-# 创建表
-collection_name = config["db_collection_name"]
-# milvus数据库好像不能存储colbert_vecs，只能存储dense_vector和sparse_vector
-# 先实现dense_vector和sparse_vector的存储和检索
-index_field_names = config["db_index_fields"]
-service.create_collection(collection_name, info_dict, index_field_names)
+# 创建表，
+wrapper.create_collection("regulation", data_regulation[0])
+wrapper.create_collection("qa", data_qa[0])
 
-# 构建JSON文件的相对路径
-json_path = "data/regulations.json"
-# 读取JSON文件
-with open(json_path, "r", encoding="utf-8") as f:
-    data = json.load(f)
+# 索引创建
+wrapper.set_index('regulation')
+wrapper.set_index('qa')
+
+from rag.database.chunk import chunk_data
 
 # 分割text
-chunked_data = chunk_data(data, config)
+chunked_data_regulation = chunk_data(data_regulation, config)
+chunked_data_qa = chunk_data(data_qa, config)
 
 # 插入数据
 # 100 为例
-chunked_data = chunked_data[:100]
-# 插入数据并显示进度条
-batch_size = 10
-total_batches = len(chunked_data) // batch_size + (1 if len(chunked_data) % batch_size != 0 else 0)
+chunked_data_regulation = chunked_data_regulation[:100]
+chunked_data_qa = chunked_data_qa[:100]
+embedding_model = model.hybrid.BGEM3EmbeddingFunction(device='cpu', return_sparse=True, return_dense=True, return_colbert_vecs=True)
 
-for i in tqdm(range(total_batches), desc="Inserting data"):
-    batch_data = chunked_data[i * batch_size : (i + 1) * batch_size]
-    embeddings = [embedding_model.encode_queries([item["content"]]) for item in batch_data]
-    data = batch_data
-    for i, item in enumerate(data):
-        item["dense_vector"] = embeddings[i]["dense"][0]
-        item["sparse_vector"] = embeddings[i]["sparse"]
-        if "id" in item:
-            del item["id"]
-    client.insert_data(collection_name, data)
+def insert(chunked_data, collection_name, embedding_model):
+    from tqdm import tqdm
+    # 插入数据并显示进度条
+    batch_size = 10
+    total_batches = len(chunked_data) // batch_size + (1 if len(chunked_data) % batch_size != 0 else 0)
+    for i in tqdm(range(total_batches), desc="Inserting data"):
+        batch_data = chunked_data[i * batch_size : (i + 1) * batch_size]
+        embeddings = [embedding_model.encode_queries([item["content"]]) for item in batch_data]
+        wrapper.insert_data(collection_name, batch_data, embeddings)
+
+insert(chunked_data_regulation, "regulation", embedding_model)
+insert(chunked_data_qa, "qa", embedding_model)
