@@ -34,6 +34,7 @@ service = MilvusService(client, embedding_model)
 
 # 表结构
 info_dict = {
+    "text_id": "",
     "document_type": "",  # 法规类型
     "category": "",  # 法规类别
     "announcement_number": "",  # 文号
@@ -44,6 +45,16 @@ info_dict = {
     "remarks": "",  # 效力说明
     "title": "",  # 标题
     "content": "",  # 内容
+    "appendix_content": "", # 附件内容
+    "appendix": [], # 附件名称
+    "metadata": {
+            "topic": [],
+            "laws": [],
+            "industries_or_products": [],
+            "scope_or_region": [],
+            "relevant_documents": [],
+            "operation": []
+    }
 }
 
 # 创建表
@@ -54,9 +65,9 @@ index_field_names = config["db_index_fields"]
 service.create_collection(collection_name, info_dict, index_field_names)
 
 # 构建JSON文件的相对路径
-json_path = "data/regulations.json"
+json_path = "/root/autodl-tmp/ruc_rag_project-master/rag/data/corpus/dataset.json"
 # 读取JSON文件
-with open(json_path, "r", encoding="utf-8") as f:
+with open(os.path.join("rag/",json_path), "r", encoding="utf-8") as f:
     data = json.load(f)
 
 # 分割text
@@ -76,6 +87,14 @@ for i in tqdm(range(total_batches), desc="Inserting data"):
     for i, item in enumerate(data):
         item["dense_vector"] = embeddings[i]["dense"][0]
         item["sparse_vector"] = embeddings[i]["sparse"]
+        
         if "id" in item:
             del item["id"]
+        if "text_id" in item:
+            item["text_id"] = str(item["text_id"])
+        if "appendix" in item:
+            item["appendix"] = ', '.join(json.dumps(a) for a in item["appendix"])
+        if "metadata" in item:
+            item["metadata"] = json.dumps(item["metadata"])
+        
     client.insert_data(collection_name, data)
