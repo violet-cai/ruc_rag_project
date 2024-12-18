@@ -27,7 +27,8 @@ config = Config()
 
 retriever = get_retriever(config)
 retrieved_list = retriever.retrieve(query)
-retrieved_list1 = retriever.retrieve_with_keywords(query) # 关键词检索
+retrieved_list_keywords = retriever.retrieve_with_keywords(query) # 关键词检索
+retrieved_list_engine = retriever.retrieve_with_engine(query)
 print(retrieved_list)
 
 reranker = get_reranker(config)

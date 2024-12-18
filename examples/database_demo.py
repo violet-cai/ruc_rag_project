@@ -7,7 +7,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from rag.database.milvus import MilvusClientWrapper, MilvusService
+from rag.database.milvus import MilvusClientWrapper
 from rag.config.config import Config
 from rag.database.chunk import chunk_data
 from pymilvus import model

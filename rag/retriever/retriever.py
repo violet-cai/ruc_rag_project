@@ -3,15 +3,14 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Tuple, Literal, Union
 
 import numpy as np
-import re
 from FlagEmbedding import BGEM3FlagModel
 
 from rag.config.config import Config
 from rag.database.utils import dense_search, sparse_search
-from rag.data.dataloader import load_dataset, load_stopwords, get_dict_path
+from rag.data.dataloader import load_dataset, get_keywords, get_html, parse_html
 from pymilvus import model
-from sklearn.feature_extraction.text import TfidfVectorizer
-import jieba  
+
+
 
 class Retriever:
     def __init__(self, config: Config):
@@ -61,47 +60,40 @@ class Retriever:
         dataset = load_dataset('dataset')
         fields_to_search = self.fields_to_search
         for query in query_list:
-            keywords_with_weights = self._get_keywords(query)
+            keywords_with_weights = get_keywords(query)
             # 权重前5的关键词用于检索
             top_weighted_keywords = [kw for kw, weight in keywords_with_weights[:5]]
             
             keyword_docs = []
             for document in dataset:
-                matched = False
+                matched_keywords_count = 0
                 for keyword in top_weighted_keywords:
                     if any(keyword in str(document.get(field, "")) for field in fields_to_search):
-                        matched = True
-                        break
-                if matched:
+                        matched_keywords_count += 1
+                # 如果关键词匹配度超过50%,则将文档添加到检索结果
+                if matched_keywords_count / len(top_weighted_keywords) >= 0.5:
                     doc_content = document.get("content","")
-                    keyword_docs.append(doc_content)
-
-            retrieved_docs.append(keyword_docs)
+                    keyword_docs.append((doc_content, matched_keywords_count))
+                    
+            keyword_docs.sort(key=lambda x: x[1], reverse=True)
+            retrieved_docs.append([doc[0] for doc in keyword_docs])
             
-        return retrieved_docs
+        return retrieved_docs[:self.topk]
     
     
-    def _get_keywords(self, query: str) -> List[str]:
+    def search_with_engine(self, query: str) -> List[str]:
+        search_content = get_html(query=query,mode='search')
+        search_results = parse_html(search_content,'search')
         
-        dict_path = get_dict_path()
-        jieba.load_userdict(dict_path)
-        new_data = ''.join(re.findall('[\u4e00-\u9fa5]+', query))
-        stopwords = load_stopwords()
-        
-        seg_list = jieba.lcut(new_data)
-        # 去除停用词并且去除单字
-        filtered_words = [word for word in seg_list if word not in stopwords and len(word) > 1]
-        # 使用TF-IDF对关键词进行打分
-        tfidf_vectorizer = TfidfVectorizer(max_features=10)
-        tfidf_matrix = tfidf_vectorizer.fit_transform([' '.join(filtered_words)])
-        feature_names = tfidf_vectorizer.get_feature_names_out()
-        tfidf_scores = tfidf_matrix.toarray()[0]
-
-        keywords_with_weights = [(feature_names[i], tfidf_scores[i]) for i in range(len(feature_names))]
-        keywords_with_weights.sort(key=lambda x: x[1], reverse=True)  
-        
-        return keywords_with_weights
+        retrieved_docs = []
+        for result in search_results:
+            url = result['link']
+            title = result['title']
+            doc_content = get_html(url=url,mode='extract')
+            doc = parse_html(doc_content,'extract')
+            if doc:
+                retrieved_docs.append({'title': title, 'doc': doc})
+            else:
+                continue
+        return retrieved_docs 
     
-    
-
-        
