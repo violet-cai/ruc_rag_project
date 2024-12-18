@@ -4,10 +4,9 @@ from .milvus import MilvusService
 from ..config.config import Config
 from pymilvus import model
 
-embedding_model = model.hybrid.BGEM3EmbeddingFunction(return_sparse=True, return_dense=True, return_colbert_vecs=True)
-wrapper = MilvusClientWrapper()
+# embedding_model = model.hybrid.BGEM3EmbeddingFunction(return_sparse=True, return_dense=True, return_colbert_vecs=True)
 config = Config()
-
+wrapper = MilvusClientWrapper(config)
 
 def dense_search(query_embedding: list, topk=10):
     res_list = wrapper.search(
