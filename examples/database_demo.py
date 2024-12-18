@@ -65,9 +65,9 @@ index_field_names = config["db_index_fields"]
 service.create_collection(collection_name, info_dict, index_field_names)
 
 # 构建JSON文件的相对路径
-json_path = "/root/autodl-tmp/ruc_rag_project-master/rag/data/corpus/dataset.json"
+json_path = "data/corpus/dataset.json"
 # 读取JSON文件
-with open(os.path.join("rag/",json_path), "r", encoding="utf-8") as f:
+with open(json_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 # 分割text
