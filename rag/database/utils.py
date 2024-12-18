@@ -1,6 +1,5 @@
 from typing import List, Dict, Any
 from .milvus import MilvusClientWrapper
-from .milvus import MilvusService
 from ..config.config import Config
 from pymilvus import model
 
