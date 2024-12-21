@@ -7,6 +7,7 @@ from pymilvus import model
 config = Config()
 wrapper = MilvusClientWrapper(config)
 
+
 def dense_search(query_embedding: list, topk=10):
     res_list = wrapper.search(
         collection_name=config["db_collection_name"],

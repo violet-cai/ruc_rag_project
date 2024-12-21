@@ -7,19 +7,18 @@ random_seed: 42
 gpu_id: 0
 
 #dataset
-corpus_path: "data/corpus/dataset.json"
-qa_path: "data/corpus/qa.json"
+corpus_path: "data/regulations_with_metadata.json"
+qa_path: "data/QA_filtered.json"
 stopword_path: "data/stopwords.txt"
 dict_path: "data/dataset_dict.txt"
 
-
 # database_config
 db_name: "my_db"
-# db_uri: "./milvus.db" 
-db_uri: "http://localhost:19530"
+db_uri: "./milvus.db"
+# db_uri: "http://localhost:19530"
 db_collection_name: "regulation"
 db_output_fields: ["content"]
-db_index_fields: ["dense_vector","sparse_vector"]
+db_index_fields: ["dense_vector", "sparse_vector"]
 db_chunk_size: 256
 db_embedding_dim: 1024
 db_text_id: "text_id"
@@ -27,7 +26,8 @@ db_content_key: "content"
 db_appendix_content_key: "appendix_content"
 db_metadata_key: "metadata"
 db_sparse_index_type: "SPARSE_INVERTED_INDEX"
-db_dense_index_type: "IVF_FLAT"
+db_dense_index_type: "HNSW"
+# db_dense_index_type: "IVF_FLAT"
 
 # retriever
 embedding_model: "BAAI/bge-m3"
@@ -36,15 +36,27 @@ rrf_k: 60
 fields_to_search: ["metadata"]
 # rerank
 rerank_model: "BAAI/bge-reranker-v2-m3"
-rerank_topk: 2
+rerank_topk: 3
 
 #generate
 generate_model: "Qwen/Qwen2.5-0.5B-Instruct"
 
-
 # -------------------------------------------------Evaluation Settings------------------------------------------------#
 # Metrics to evaluate the result
-metrics: [ 'f1','em','bleu','acc','precision','recall','rouge-1','rouge-2','rouge-l','retrieval_recall','retrieval_precision']
+metrics:
+  [
+    "f1",
+    "em",
+    "bleu",
+    "acc",
+    "precision",
+    "recall",
+    "rouge-1",
+    "rouge-2",
+    "rouge-l",
+    "retrieval_recall",
+    "retrieval_precision",
+  ]
 # Specify setting for metric, will be called within certain metrics
 metric_setting:
   bleu_max_order: 4
