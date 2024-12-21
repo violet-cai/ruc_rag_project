@@ -30,7 +30,7 @@ class Generator:
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                max_length=1024,  # 根据需要调整最大长度
+                max_length=2048,  # 根据需要调整最大长度
                 num_return_sequences=1,
                 no_repeat_ngram_size=2,
                 top_p=0.95,
