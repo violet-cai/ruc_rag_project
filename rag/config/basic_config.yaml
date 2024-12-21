@@ -19,9 +19,10 @@ db_name: "my_db"
 db_uri: "http://localhost:19530"
 db_collection_name: "regulation"
 db_output_fields: ["content"]
-db_index_fields: ["dense_vector","sparse_vector"]
+db_index_fields: ["bm25_sparse_vector","dense_vector","sparse_vector"]
 db_chunk_size: 256
 db_embedding_dim: 1024
+# db_embedding_dim: 768
 db_text_id: "text_id"
 db_content_key: "content"
 db_appendix_content_key: "appendix_content"
