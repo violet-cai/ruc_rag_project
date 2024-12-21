@@ -1,4 +1,4 @@
-from pymilvus import MilvusClient, Collection, CollectionSchema, FieldSchema, DataType
+from pymilvus import MilvusClient, Collection, CollectionSchema, FieldSchema, DataType, Function, FunctionType
 from .logger import db_logger
 from typing import Union
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
@@ -19,6 +19,14 @@ class MilvusClientWrapper:
                 db_logger.info(f"collection: {collection_name} 已存在")
                 return
             schema = self._create_milvus_schema(info_dict)
+            # 后续加入设置进行控制，此处用于构建评估数据集
+            functions = Function(
+            name="bm25_sparse_vector",
+            function_type=FunctionType.BM25,
+            input_field_names=["content"],
+            output_field_names=["bm25_sparse_vector"],
+            )
+            schema.add_function(functions)
             self.client.create_collection(collection_name=collection_name, schema=schema)
             db_logger.info(f"collection: {collection_name} 创建成功")
         except Exception as e:
@@ -30,11 +38,11 @@ class MilvusClientWrapper:
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
             FieldSchema(name="dense_vector", dtype=DataType.FLOAT_VECTOR, dim=self.vector_dim),
             FieldSchema(name="sparse_vector", dtype=DataType.SPARSE_FLOAT_VECTOR),
-            # FieldSchema(name="colbert_vector", dtype=DataType.FLOAT_VECTOR,dim=self.vector_dim)
+            FieldSchema(name="bm25_sparse_vector", dtype=DataType.SPARSE_FLOAT_VECTOR)
         ]
         for key, value in info_dict.items():
             if key == self.config["db_content_key"]:
-                fields.append(FieldSchema(name=key, dtype=DataType.VARCHAR, max_length=5096, is_primary=False))
+                fields.append(FieldSchema(name=key, dtype=DataType.VARCHAR, max_length=5096, is_primary=False, enable_match=True, enable_analyzer=True))
             elif key == self.config["db_text_id"]:
                 fields.append(FieldSchema(name=key, dtype=DataType.INT64, is_primary=False, auto_id=False))
             elif key == self.config["db_metadata_key"]:
@@ -51,8 +59,14 @@ class MilvusClientWrapper:
         try:
             index_params = self.client.prepare_index_params()
             for field_name in self.config["db_index_fields"]:
+                if field_name == "bm25_sparse_vector":
+                    index_params.add_index(
+                        field_name=field_name,
+                        index_type="SPARSE_INVERTED_INDEX",
+                        metric_type="BM25",
+                    )
                 # 稀疏向量索引
-                if field_name == "sparse_vector":
+                elif field_name == "sparse_vector":
                     index_params.add_index(
                         field_name=field_name,
                         index_type=self.config["db_sparse_index_type"],
