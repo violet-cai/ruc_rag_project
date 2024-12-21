@@ -15,7 +15,7 @@ def dense_search(query_embedding: list, topk=10):
         output_fields=config["db_output_fields"],
         search_field="dense_vector",
         limit=topk,
-        search_params={"metric_type": "IP", "params": {"nprobe": 10}},
+        search_params={"metric_type": "L2", "params": {"nprobe": 10}},
     )
     return [res["entity"]["content"] for res in res_list]
 
