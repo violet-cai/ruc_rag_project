@@ -11,6 +11,7 @@ corpus_path: "data/regulations_with_metadata.json"
 qa_path: "data/QA_filtered.json"
 stopword_path: "data/stopwords.txt"
 dict_path: "data/dataset_dict.txt"
+bing_api: "63516b23c16b44e4947a5142c58b9292"
 
 # database_config
 db_name: "my_db"
