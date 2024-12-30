@@ -26,7 +26,7 @@ import certifi
 import ssl
 
 
-path_evaluate_data = 'rag/data/corpus/evaluate_data.json'
+path_evaluate_data = 'rag/data/corpus/evaluate_data_beta_filtered.json'
 
 with open(path_evaluate_data, "r", encoding='utf-8') as file:
 	evaluate_data = json.loads(file.read())
@@ -43,7 +43,7 @@ for relative_doc in evaluate_data:
     for single_doc in single_query_relative_retrieval:
         single_query_relative_retrieval_list.append(single_doc['content'])
     golden_retrieval.append(single_query_relative_retrieval_list)
-print(golden_retrieval)
+# print(golden_retrieval)
 
 config = Config()
 
