@@ -7,7 +7,7 @@ from FlagEmbedding import BGEM3FlagModel
 
 from rag.config.config import Config
 from rag.database.utils import dense_search, sparse_search
-from rag.data.dataloader import load_dataset, get_keywords, get_html, parse_html
+from rag.dataprocess.dataloader import get_datasets, get_keywords, bing_search, baidu_search, get_docs
 from pymilvus import model
 
 
@@ -57,43 +57,56 @@ class Retriever:
 
     def retrieve_with_keywords(self, query_list: List[str]) -> List[List[str]]:
         retrieved_docs = []
-        dataset = load_dataset('dataset')
-        fields_to_search = self.fields_to_search
+        datasets = get_datasets()
+        
         for query in query_list:
             keywords_with_weights = get_keywords(query)
             # 权重前5的关键词用于检索
             top_weighted_keywords = [kw for kw, weight in keywords_with_weights[:5]]
-            
-            keyword_docs = []
-            for document in dataset:
-                matched_keywords_count = 0
-                for keyword in top_weighted_keywords:
-                    if any(keyword in str(document.get(field, "")) for field in fields_to_search):
-                        matched_keywords_count += 1
-                # 如果关键词匹配度超过50%,则将文档添加到检索结果
-                if matched_keywords_count / len(top_weighted_keywords) >= 0.5:
-                    doc_content = document.get("content","")
-                    keyword_docs.append((doc_content, matched_keywords_count))
-                    
-            keyword_docs.sort(key=lambda x: x[1], reverse=True)
-            retrieved_docs.append([doc[0] for doc in keyword_docs])
-            
-        return retrieved_docs[:self.topk]
+            for dataset in datasets:
+                retrieved_docs.append(self.keyword_retrieval(dataset,top_weighted_keywords))
+                
+        return retrieved_docs
     
+    def keyword_retrieval(self, dataset:dict,top_weighted_keywords:list) -> List[List[str]]:
+        fields_to_search = self.fields_to_search
+        keyword_docs = []
+        for document in dataset:
+            matched_keywords_count = 0
+            for keyword in top_weighted_keywords:
+                if any(keyword in str(document.get(field, "")) for field in fields_to_search):
+                    matched_keywords_count += 1
+            # 如果关键词匹配度超过50%,则将文档添加到检索结果
+            if matched_keywords_count / len(top_weighted_keywords) >= 0.2:
+                doc_content = document.get("content", "") 
+                ans_content = document.get("answer", "")
+                if ans_content:
+                    doc_content = doc_content + document.get("answer", "")
+                keyword_docs.append((doc_content, matched_keywords_count))
+        keyword_docs.sort(key=lambda x: x[1], reverse=True)
+        return [doc[0] for doc in keyword_docs[:self.topk]]
     
-    def search_with_engine(self, query: str) -> List[str]:
-        search_content = get_html(query=query,mode='search')
-        search_results = parse_html(search_content,'search')
-        
+    def bing_retrieval(self, query_list: List[str]) -> List[List[str]]:
         retrieved_docs = []
-        for result in search_results:
-            url = result['link']
-            title = result['title']
-            doc_content = get_html(url=url,mode='extract')
-            doc = parse_html(doc_content,'extract')
-            if doc:
-                retrieved_docs.append({'title': title, 'doc': doc})
-            else:
-                continue
-        return retrieved_docs 
+        for query in query_list:
+            doc = self.retrieve_with_engine(query,'bing')
+            retrieved_docs.append(doc)
+        return retrieved_docs
+    
+    def baidu_retrieval(self, query_list: List[str]) -> List[List[str]]:
+        retrieved_docs = []
+        for query in query_list:
+            doc = self.retrieve_with_engine(query,'baidu')
+            retrieved_docs.append(doc)
+        return retrieved_docs
+    
+    def retrieve_with_engine(self, query: str, mode='bing') -> List[str]:
+        if mode == 'bing':
+            search_results = bing_search(query)
+        elif mode == 'baidu':
+            search_results = baidu_search(query)
+        if search_results:
+            retrieved_docs = get_docs(search_results)
+        
+        return retrieved_docs[:self.topk]
     

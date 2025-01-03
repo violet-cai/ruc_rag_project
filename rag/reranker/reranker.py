@@ -9,7 +9,7 @@ from rag.config.config import Config
 
 class Reranker:
     def __init__(self, config: Config):
-        self.topk = config["reranker_topk"]
+        self.topk = config["rerank_topk"]
         self.model = FlagReranker(config["rerank_model"], devices="cpu")
 
     def _rerank_single_query(self, query: str, docs: List[str]) -> List[str]:
