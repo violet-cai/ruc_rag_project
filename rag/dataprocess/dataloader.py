@@ -56,7 +56,9 @@ def load_dataset(dataset_name):
     return data_set
 
 def get_datasets():
-    dataset_names = ["corpus", "qa"]
+    # dataset_names = ["corpus", "qa"]
+    # 只对regu进行检索
+    dataset_names = ["corpus"]
     ret = []
     for dataset_name in dataset_names:
         dataset = load_dataset(dataset_name)
@@ -216,7 +218,6 @@ def baidu_search(query:str) -> list:
         return search_results
     return None
     
-
 def bing_search(query: str) -> list:
     """
     使用 Bing Search API 搜索查询并获取结果。

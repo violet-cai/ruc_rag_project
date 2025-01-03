@@ -3,14 +3,13 @@ from .logger import db_logger
 
 from rag.config.config import Config
 
-
 #  客户端
 class MilvusClientWrapper:
     def __init__(self, config: Config):
         self.client = MilvusClient(config["db_uri"])
         self.vector_dim = config["db_embedding_dim"]
         self.config = config
-        db_logger.info(f"Milvus 连接")
+        # db_logger.info(f"Milvus 连接")
 
     def create_collection(self, collection_name: str, info_dict: dict):
         try:
@@ -48,7 +47,7 @@ class MilvusClientWrapper:
                 fields.append(FieldSchema(name=key, dtype=DataType.JSON, is_primary=False))
             else:
                 if isinstance(value, str):
-                    fields.append(FieldSchema(name=key, dtype=DataType.VARCHAR, max_length=2048, is_primary=False))
+                    fields.append(FieldSchema(name=key, dtype=DataType.VARCHAR, max_length=3072, is_primary=False))
                 else:
                     fields.append(FieldSchema(name=key, dtype=DataType.JSON, is_primary=False))
         schema = CollectionSchema(fields=fields, description="Custom collection schema")
@@ -77,7 +76,7 @@ class MilvusClientWrapper:
                     index_params.add_index(
                         field_name=field_name,
                         index_type=self.config["db_dense_index_type"],
-                        metric_type="L2",
+                        metric_type="IP",
                         # params={"nlist": 1024},
                         params={"M": 16, "efConstruction": 100},  # 使用HNSW时
                     )
