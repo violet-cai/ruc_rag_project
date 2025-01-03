@@ -17,6 +17,7 @@ class Retriever:
         self.rrf_k = config["rrf_k"]    # RRF算法加权参数
         self.topk = config["retriever_topk"]    # topk个文档
         self.fields_to_search = config['fields_to_search']
+        self.collection_name = config["db_collection_name"]
         self.model = model.hybrid.BGEM3EmbeddingFunction(
             device="cuda:0", return_sparse=True, return_dense=True, return_colbert_vecs=False
         )   # 采用BGE3模型
@@ -28,8 +29,8 @@ class Retriever:
         ],
     ) -> Tuple[List[dict], List[dict]]:
         # 分别检索三种检索方法
-        dense_retrieved_list = dense_search(query_embedding=query_embedding["dense"][0], topk=self.topk * 3)    # 密集向量
-        sparse_retrieved_list = sparse_search(query_embedding=query_embedding["sparse"], topk=self.topk)    # 稀疏向量
+        dense_retrieved_list = dense_search(query_embedding=query_embedding["dense"][0], topk=self.topk * 3, collection_name=self.collection_name)    # 密集向量
+        sparse_retrieved_list = sparse_search(query_embedding=query_embedding["sparse"], topk=self.topk, collection_name=self.collection_name)    # 稀疏向量
         # 不确定检索时间消耗，并行反而可能减速
         # with ThreadPoolExecutor() as executor:
         #     dense_future = executor.submit(dense_search, query_embedding["dense_vecs"][0], topk=self.topk * 5)
