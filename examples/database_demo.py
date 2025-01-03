@@ -17,8 +17,8 @@ from tqdm import tqdm
 config = Config()
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-path_regu = 'data/regulations_with_metadata.json'
-path_qa = 'data/QA_filtered.json'
+path_regu = config["corpus_path"]
+path_qa = config["qa_path"]
 
 with open(path_regu, "r", encoding='utf-8') as file:
 	data_regulation = json.loads(file.read())
@@ -54,6 +54,7 @@ bge_embedding_model = model.hybrid.BGEM3EmbeddingFunction(device='cuda:0', retur
 
 def insert(chunked_data, collection_name):
     from tqdm import tqdm
+
     # 插入数据并显示进度条
     batch_size = 10
     total_batches = len(chunked_data) // batch_size + (1 if len(chunked_data) % batch_size != 0 else 0)

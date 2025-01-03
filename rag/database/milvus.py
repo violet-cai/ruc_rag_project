@@ -1,13 +1,12 @@
 from pymilvus import MilvusClient, Collection, CollectionSchema, FieldSchema, DataType, Function, FunctionType
 from .logger import db_logger
-from typing import Union
-from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
 from rag.config.config import Config
 
+
 #  客户端
 class MilvusClientWrapper:
-    def __init__(self, config:Config):
+    def __init__(self, config: Config):
         self.client = MilvusClient(config["db_uri"])
         self.vector_dim = config["db_embedding_dim"]
         self.config = config
@@ -32,7 +31,7 @@ class MilvusClientWrapper:
         except Exception as e:
             db_logger.error(f"创建 collection 失败: {e}")
             raise
-        
+
     def _create_milvus_schema(self, info_dict: dict):
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
@@ -48,7 +47,7 @@ class MilvusClientWrapper:
             elif key == self.config["db_metadata_key"]:
                 fields.append(FieldSchema(name=key, dtype=DataType.JSON, is_primary=False))
             else:
-                if(isinstance(value, str)):
+                if isinstance(value, str):
                     fields.append(FieldSchema(name=key, dtype=DataType.VARCHAR, max_length=2048, is_primary=False))
                 else:
                     fields.append(FieldSchema(name=key, dtype=DataType.JSON, is_primary=False))
@@ -78,17 +77,18 @@ class MilvusClientWrapper:
                     index_params.add_index(
                         field_name=field_name,
                         index_type=self.config["db_dense_index_type"],
-                        metric_type="IP",
-                        params={"nlist": 1024}
+                        metric_type="L2",
+                        # params={"nlist": 1024},
+                        params={"M": 16, "efConstruction": 100},  # 使用HNSW时
                     )
             self.client.create_index(collection_name=collection_name, index_params=index_params)
             db_logger.info(f"collection: {collection_name} 的索引创建成功")
         except Exception as e:
             db_logger.error(f"创建索引失败: {e}")
             raise
-    
+
     # 插入数据
-    def insert_data(self, collection_name:str, data: list[dict], embeddings: list[dict]):
+    def insert_data(self, collection_name: str, data: list[dict], embeddings: list[dict]):
         data = self._insert_data_preprocess(data, embeddings)
         try:
             res = self.client.insert(collection_name=collection_name, data=data)
@@ -96,9 +96,9 @@ class MilvusClientWrapper:
         except Exception as e:
             db_logger.error(f"插入数据失败: {e}")
             raise
-    
+
     # 插入前encode数据
-    def _insert_data_preprocess(self, data: list[dict], embeddings:list[dict]):
+    def _insert_data_preprocess(self, data: list[dict], embeddings: list[dict]):
         for i, item in enumerate(data):
             item["dense_vector"] = embeddings[i]["dense"][0]
             item["sparse_vector"] = embeddings[i]["sparse"]
