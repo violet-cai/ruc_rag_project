@@ -44,12 +44,10 @@ def load_dataset(dataset_name):
         dataset_path = config['corpus_path']
     elif dataset_name == 'qa':
         dataset_path = config['qa_path']
-        
+    
     if not dataset_path:
         raise ValueError(f"未找到名为 {dataset_name} 的数据集路径。")
-    current_dir = os.path.dirname(__file__)
-    if 'data/' in dataset_path:
-       dataset_path = dataset_path.replace('data/', '') 
+    current_dir = os.getcwd()
     file_path = os.path.join(current_dir, dataset_path)
     data_set = load_data_from_json(file_path)
     
@@ -67,9 +65,8 @@ def load_stopwords():
     config = Config()
     
     stopword_path = config['stopword_path']
-    current_dir = os.path.dirname(__file__)
-    if 'data/' in stopword_path:
-       stopword_path = stopword_path.replace('data/', '') 
+    current_dir = os.getcwd()
+ 
     file_path = os.path.join(current_dir, stopword_path)
     stopwords = load_stopwords_form_txt(file_path)
     return stopwords
@@ -78,9 +75,7 @@ def get_dict_path():
     config = Config()
     
     dict_path = config['dict_path']
-    current_dir = os.path.dirname(__file__)
-    if 'data/' in dict_path:
-       dict_path = dict_path.replace('data/', '') 
+    current_dir = os.getcwd()
     dict_path = os.path.join(current_dir, dict_path)
     
     return dict_path
