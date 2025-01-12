@@ -23,9 +23,9 @@ class Generator:
         if not query_list or not reranked_list:
             return "No questions or references provided."
         prompt = self._build_prompt(query_list, reranked_list)
-        print(prompt)
-        self.model = self.model.to("cuda")
-        inputs = self.tokenizer(prompt, return_tensors="pt").to("cuda")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = self.model.to(device)
+        inputs = self.tokenizer(prompt, return_tensors="pt").to(device)
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
