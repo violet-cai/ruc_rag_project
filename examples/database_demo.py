@@ -45,7 +45,7 @@ chunked_data_regulation = chunk_data(data_regulation, config)
 chunked_data_qa = chunk_data(data_qa, config)
 
 embedding_model = model.hybrid.BGEM3EmbeddingFunction(
-    device="cuda:0", return_sparse=True, return_dense=True, return_colbert_vecs=True
+    device=config["embedding_device"], return_sparse=True, return_dense=True, return_colbert_vecs=True
 )
 
 def insert(chunked_data, collection_name, embedding_model):

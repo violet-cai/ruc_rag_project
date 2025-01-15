@@ -57,12 +57,14 @@ db_sparse_search_params:
 
 # retriever
 embedding_model: "BAAI/bge-m3"
+embedding_device: "cuda:0"
 retriever_topk: 5
 rrf_k: 60
 fields_to_search: ["metadata"]
 enginesearch_mode: "bing"
 # rerank
 rerank_model: "BAAI/bge-reranker-v2-m3"
+rerank_device: "cuda:0"
 rerank_topk: 3
 
 #generate

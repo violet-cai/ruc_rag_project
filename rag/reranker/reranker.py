@@ -3,24 +3,20 @@ from typing import List
 
 import numpy as np
 from FlagEmbedding import FlagReranker
-
+from pymilvus import model
 from rag.config.config import Config
 
 
 class Reranker:
     def __init__(self, config: Config):
         self.topk = config["rerank_topk"]
-        self.model = FlagReranker(config["rerank_model"], devices="cpu")
-
+        self.model = model.reranker.BGERerankFunction(config["rerank_model"], device=config["rerank_device"])
+        
     def _rerank_single_query(self, query: str, docs: List[str]) -> List[str]:
-        # 对每个query的候选文档进行重排
-        pairs = [(query, doc) for doc in docs]
-        scores = self.model.compute_score(pairs, normalize=True)
-        if isinstance(scores, np.ndarray):
-            scores = scores.tolist()
-        scored_docs = list(zip(docs, scores))
-        scored_docs.sort(key=lambda x: x[1], reverse=True)
-        reranked_docs = [doc for doc, _ in scored_docs]
+        # # 对每个query的候选文档进行重排
+        reranked_results = self.model(query,docs)
+        sorted_results = sorted(reranked_results, key=lambda x: x.score, reverse=True)
+        reranked_docs = [results.text for results in sorted_results]
         return reranked_docs[: self.topk]
 
     def rerank(self, query_list: List[str], retrieved_list: List[List[str]]) -> List[List[str]]:

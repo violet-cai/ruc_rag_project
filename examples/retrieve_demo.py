@@ -13,9 +13,9 @@ from rag.retriever.utils import get_retriever
 
 from pymilvus import model
 
-
+config = Config()
 embedding_model = model.hybrid.BGEM3EmbeddingFunction(
-    devices="cuda:0", return_sparse=True, return_dense=True, return_colbert_vecs=False
+    devices=config["embedding_device"], return_sparse=True, return_dense=True, return_colbert_vecs=False
 )
 
 query = "如果在准备材料的过程中遇到问题，应该联系谁呢？"
@@ -37,7 +37,7 @@ historys = [
 ]
 
 
-config = Config()
+
 retriever = get_retriever(config)
 reranker = get_reranker(config)
 generator = get_generator(config)
@@ -46,7 +46,6 @@ generator = get_generator(config)
 def get_answer(query, historys):
     print("before query modified: ", query)
     query = retriever.update_query(query, historys)
-    # query = [get_new_query_1(historys, query[-1])]
     history = {}
     history["query"] = query
     print("after query modified: ", query)
