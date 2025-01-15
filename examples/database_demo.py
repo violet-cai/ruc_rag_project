@@ -12,15 +12,13 @@ from rag.config.config import Config
 from rag.database.chunk import chunk_data
 from pymilvus import model
 from tqdm import tqdm
-
+import torch
 
 # config
 config = Config()
 # 设置环境变量以避免内存碎片化
-import os
-
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-import torch
+
 
 path_regu = config["corpus_path"]
 path_qa = config["qa_path"]
@@ -31,8 +29,7 @@ with open(path_regu, "r", encoding="utf-8") as file:
 with open(path_qa, "r", encoding="utf-8") as file:
     data_qa = json.loads(file.read())
 
-config = Config()
-# embedding_model = model.hybrid.BGEM3EmbeddingFunction(return_sparse=True, return_dense=True, return_colbert_vecs=True)
+
 wrapper = MilvusClientWrapper(config)
 
 # 创建表，
@@ -43,20 +40,13 @@ wrapper.create_collection("qa", data_qa[0])
 wrapper.set_index("regulation")
 wrapper.set_index("qa")
 
-from rag.database.chunk import chunk_data
-
 # 分割text
 chunked_data_regulation = chunk_data(data_regulation, config)
 chunked_data_qa = chunk_data(data_qa, config)
 
-# 插入数据
-# 100 为例
-chunked_data_regulation = chunked_data_regulation[:100]
-chunked_data_qa = chunked_data_qa[:100]
 embedding_model = model.hybrid.BGEM3EmbeddingFunction(
-    device="cpu", return_sparse=True, return_dense=True, return_colbert_vecs=True
+    device="cuda:0", return_sparse=True, return_dense=True, return_colbert_vecs=True
 )
-
 
 def insert(chunked_data, collection_name, embedding_model):
     from tqdm import tqdm

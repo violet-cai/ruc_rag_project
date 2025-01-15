@@ -55,17 +55,16 @@ class MilvusClientWrapper:
                     index_params.add_index(
                         field_name=field_name,
                         index_type=self.config["db_sparse_index_type"],
-                        metric_type="IP",
-                        params={"nlist": 1024},
+                        metric_type=self.config["db_sparse_metric_type"],
+                        params=self.config["db_sparse_params"],
                     )
                 # 稠密向量索引
                 else:
                     index_params.add_index(
                         field_name=field_name,
                         index_type=self.config["db_dense_index_type"],
-                        metric_type="L2",
-                        # params={"nlist": 1024},
-                        params={"M": 16, "efConstruction": 100},  # 使用HNSW时
+                        metric_type=self.config["db_dense_metric_type"],
+                        params=self.config["db_dense_params"]
                     )
             self.client.create_index(collection_name=collection_name, index_params=index_params)
             db_logger.info(f"collection: {collection_name} 的索引创建成功")

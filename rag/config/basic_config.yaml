@@ -11,9 +11,11 @@ corpus_path: "data/regulations_with_metadata.json"
 qa_path: "data/QA_filtered.json"
 stopword_path: "data/stopwords.txt"
 dict_path: "data/dataset_dict.txt"
+# dataloader
 bing_api: "63516b23c16b44e4947a5142c58b9292"
 bing_url: "https://api.bing.microsoft.com/v7.0/search"
-#queryupdate
+
+#queryupdater
 llm_model: "qwen-max-latest"
 base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
 api_key: "sk-c02056e042844ee1815cb64d8ede554f"
@@ -22,7 +24,8 @@ api_key: "sk-c02056e042844ee1815cb64d8ede554f"
 db_name: "my_db"
 db_uri: "./milvus.db"
 # db_uri: "http://localhost:19530"
-db_collection_name: "regulation"
+db_collection_name_regu: "regulation"
+db_collection_name_qa: "qa"
 db_output_fields: ["content"]
 db_index_fields: ["dense_vector", "sparse_vector"]
 db_chunk_size: 256
@@ -32,8 +35,25 @@ db_content_key: "content"
 db_appendix_content_key: "appendix_content"
 db_metadata_key: "metadata"
 db_sparse_index_type: "SPARSE_INVERTED_INDEX"
+db_sparse_metric_type: "IP"
+db_dense_metric_type: "L2"
 db_dense_index_type: "HNSW"
+db_sparse_params:
+  nlist: 1024
+db_dense_params:
+  M: 16
+  efConstruction: 100
 # db_dense_index_type: "IVF_FLAT"
+# db_dense_params:
+#   nlist: 1024
+db_dense_search_params:
+  metric_type: L2
+  params:
+    nprobe: 10
+db_sparse_search_params:
+  metric_type: IP
+  params:
+    drop_ratio_search: 0.2
 
 # retriever
 embedding_model: "BAAI/bge-m3"

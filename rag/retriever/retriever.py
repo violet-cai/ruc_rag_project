@@ -3,8 +3,6 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Tuple, Literal, Union
 
 import numpy as np
-from FlagEmbedding import BGEM3FlagModel
-
 from rag.config.config import Config
 from rag.database.utils import dense_search, sparse_search
 from dataprocess.dataloader import get_datasets, get_keywords, bing_search, baidu_search, get_docs
