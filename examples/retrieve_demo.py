@@ -10,7 +10,7 @@ from rag.config.config import Config
 from rag.generator.utils import get_generator
 from rag.reranker.utils import get_reranker
 from rag.retriever.utils import get_retriever
-from rag.dataprocess.queryupdater import get_new_query_1, get_new_query_2
+
 from pymilvus import model
 
 
@@ -19,7 +19,7 @@ embedding_model = model.hybrid.BGEM3EmbeddingFunction(
 )
 
 query = "如果在准备材料的过程中遇到问题，应该联系谁呢？"
-query = [query]
+
 
 historys = [
     {
@@ -36,6 +36,7 @@ historys = [
     },
 ]
 
+
 config = Config()
 retriever = get_retriever(config)
 reranker = get_reranker(config)
@@ -44,15 +45,14 @@ generator = get_generator(config)
 
 def get_answer(query, historys):
     print("before query modified: ", query)
-    query = [get_new_query_1(historys, query[-1])]
+    query = retriever.update_query(query, historys)
     # query = [get_new_query_1(historys, query[-1])]
     history = {}
     history["query"] = query
     print("after query modified: ", query)
     retrieved_list = retriever.retrieve(query)
     retrieved_list_keywords = retriever.retrieve_with_keywords(query)
-    retrieved_list_bing = retriever.bing_retrieval(query)
-    retrieved_list_baidu = retriever.baidu_retrieval(query)
+    retrieved_list_engine = retriever.retrieve_with_engine(query)
     reranked_list = reranker.rerank(query, retrieved_list)
     answer = generator.generate(query, reranked_list)
 

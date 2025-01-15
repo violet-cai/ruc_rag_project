@@ -12,6 +12,11 @@ qa_path: "data/QA_filtered.json"
 stopword_path: "data/stopwords.txt"
 dict_path: "data/dataset_dict.txt"
 bing_api: "63516b23c16b44e4947a5142c58b9292"
+bing_url: "https://api.bing.microsoft.com/v7.0/search"
+#queryupdate
+llm_model: "qwen-max-latest"
+base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+api_key: "sk-c02056e042844ee1815cb64d8ede554f"
 
 # database_config
 db_name: "my_db"
@@ -35,13 +40,21 @@ embedding_model: "BAAI/bge-m3"
 retriever_topk: 5
 rrf_k: 60
 fields_to_search: ["metadata"]
+enginesearch_mode: "bing"
 # rerank
 rerank_model: "BAAI/bge-reranker-v2-m3"
 rerank_topk: 3
 
 #generate
 generate_model: "Qwen/Qwen2.5-0.5B-Instruct"
-
+generate_config:
+  max_length: 1024      # 根据需要调整最大长度
+  num_return_sequences: 1
+  no_repeat_ngram_size: 2
+  top_p: 0.95
+  temperature: 0.9
+  num_beams: 3
+  early_stopping: true
 # -------------------------------------------------Evaluation Settings------------------------------------------------#
 # Metrics to evaluate the result
 metrics:

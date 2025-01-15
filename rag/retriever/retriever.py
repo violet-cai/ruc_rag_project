@@ -7,7 +7,8 @@ from FlagEmbedding import BGEM3FlagModel
 
 from rag.config.config import Config
 from rag.database.utils import dense_search, sparse_search
-from rag.dataprocess.dataloader import get_datasets, get_keywords, bing_search, baidu_search, get_docs
+from dataprocess.dataloader import get_datasets, get_keywords, bing_search, baidu_search, get_docs
+from dataprocess.queryupdater import get_new_query_1
 from pymilvus import model
 
 
@@ -16,6 +17,7 @@ class Retriever:
         self.rrf_k = config["rrf_k"]  # RRF算法加权参数
         self.topk = config["retriever_topk"]  # topk个文档
         self.fields_to_search = config["fields_to_search"]
+        self.engine_search_mode = config["enginesearch_mode"]
         self.model = model.hybrid.BGEM3EmbeddingFunction(
             device="cuda:0", return_sparse=True, return_dense=True, return_colbert_vecs=False
         )  # 采用BGE3模型
@@ -44,29 +46,25 @@ class Retriever:
             scores[doc] += 1 / (self.rrf_k + idx + 1)
         return [doc for doc, _ in sorted(scores.items(), key=lambda item: item[1], reverse=True)][: self.topk]
 
-    def retrieve(self, query_list: List[str]) -> List[List[str]]:
+    def retrieve(self, query: str) -> List[str]:
         retrieved_docs = []
-        for query in query_list:
-            query_embedding = self.model([query])
-            dense_retrieved_list, sparse_retrieved_list = self._get_retrieved_lists(query_embedding)
-            docs = self._rrf(dense_retrieved_list, sparse_retrieved_list)
-            retrieved_docs.append(docs)
+        query_embedding = self.model([query])
+        dense_retrieved_list, sparse_retrieved_list = self._get_retrieved_lists(query_embedding)
+        docs = self._rrf(dense_retrieved_list, sparse_retrieved_list)
+        retrieved_docs.append(docs)
         return retrieved_docs
 
-    def retrieve_with_keywords(self, query_list: List[str]) -> List[List[str]]:
+    def retrieve_with_keywords(self, query: str) -> List[str]:
         retrieved_docs = []
         datasets = get_datasets()
-
-        for query in query_list:
-            keywords_with_weights = get_keywords(query)
-            # 权重前5的关键词用于检索
-            top_weighted_keywords = [kw for kw, weight in keywords_with_weights[:5]]
-            for dataset in datasets:
-                retrieved_docs.append(self.keyword_retrieval(dataset, top_weighted_keywords))
-
+        keywords_with_weights = get_keywords(query)
+        # 权重前5的关键词用于检索
+        top_weighted_keywords = [kw for kw, weight in keywords_with_weights[:5]]
+        for dataset in datasets:
+            retrieved_docs.append(self.keyword_retrieval(dataset, top_weighted_keywords))
         return retrieved_docs
 
-    def keyword_retrieval(self, dataset: dict, top_weighted_keywords: list) -> List[List[str]]:
+    def keyword_retrieval(self, dataset: dict, top_weighted_keywords: list) -> List[str]:
         fields_to_search = self.fields_to_search
         keyword_docs = []
         for document in dataset:
@@ -75,35 +73,26 @@ class Retriever:
                 if any(keyword in str(document.get(field, "")) for field in fields_to_search):
                     matched_keywords_count += 1
             # 如果关键词匹配度超过50%,则将文档添加到检索结果
-            if matched_keywords_count / len(top_weighted_keywords) >= 0.2:
+            if matched_keywords_count / len(top_weighted_keywords) >= 0.3:
                 doc_content = document.get("content", "")
                 ans_content = document.get("answer", "")
                 if ans_content:
                     doc_content = doc_content + document.get("answer", "")
                 keyword_docs.append((doc_content, matched_keywords_count))
         keyword_docs.sort(key=lambda x: x[1], reverse=True)
-        return [doc[0] for doc in keyword_docs[: self.topk]]
-
-    def bing_retrieval(self, query_list: List[str]) -> List[List[str]]:
-        retrieved_docs = []
-        for query in query_list:
-            doc = self.retrieve_with_engine(query, "bing")
-            retrieved_docs.append(doc)
-        return retrieved_docs
-
-    def baidu_retrieval(self, query_list: List[str]) -> List[List[str]]:
-        retrieved_docs = []
-        for query in query_list:
-            doc = self.retrieve_with_engine(query, "baidu")
-            retrieved_docs.append(doc)
-        return retrieved_docs
+        ret = (doc[0] for doc in keyword_docs[: self.topk])
+        return ret
 
     def retrieve_with_engine(self, query: str, mode="bing") -> List[str]:
+        mode = self.engine_search_mode
         if mode == "bing":
             search_results = bing_search(query)
         elif mode == "baidu":
             search_results = baidu_search(query)
         if search_results:
             retrieved_docs = get_docs(search_results)
-
         return retrieved_docs[:3]
+
+    def update_query(self, query:str, historys:list):
+        new_query = get_new_query_1(query, historys)
+        return new_query

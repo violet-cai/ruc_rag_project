@@ -1,5 +1,5 @@
 import json
-from ..config.config import Config
+from rag.config.config import Config
 import os
 import requests
 import jieba  
@@ -222,8 +222,8 @@ def bing_search(query: str) -> list:
     返回值：
         results: 搜索结果列表
     """
-    url = "https://api.bing.microsoft.com/v7.0/search"
     config = Config()
+    url = config['bing_url']
     api_key = config['bing_api']
     headers = {
         "Ocp-Apim-Subscription-Key": api_key,

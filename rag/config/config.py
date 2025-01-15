@@ -86,7 +86,10 @@ class Config:
     def _get_internal_config(self):
         current_path = os.path.dirname(os.path.realpath(__file__))
         internal_config = os.path.join(current_path, "basic_config.yaml")
-        return self._load_file_config(internal_config)
+        basic_config = self._load_file_config(internal_config)
+        prompts_config_path = os.path.join(current_path, "prompts_config.yaml")
+        prompts_config = self._load_file_config(prompts_config_path)
+        return self._update_dict(basic_config, prompts_config)
 
     def _get_external_config(self):
         external_config = dict()
