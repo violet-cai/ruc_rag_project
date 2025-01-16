@@ -56,7 +56,7 @@ def get_answer(query, historys):
     reranked_list_keywords = reranker.rerank(query, retrieved_list_keywords)
     reranked_list_engine = reranker.rerank(query, retrieved_list_engine)
 
-    answer = generator.generate(query, reranked_list)
+    answer = generator.generate(query, reranked_list, historys)
 
     history["answer"] = answer
     historys.append(history)

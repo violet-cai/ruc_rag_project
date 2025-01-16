@@ -15,10 +15,10 @@ dict_path: "data/dataset_dict.txt"
 bing_api: "63516b23c16b44e4947a5142c58b9292"
 bing_url: "https://api.bing.microsoft.com/v7.0/search"
 
-#queryupdater
+#llm_config
 llm_model: "qwen-max-latest"
 base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
-api_key: "sk-c02056e042844ee1815cb64d8ede554f"
+api_key: "sk-feebadbcb5654f5c8f9044c78f7c4548"
 
 # database_config
 db_name: "my_db"
@@ -68,15 +68,11 @@ rerank_device: "cuda:0"
 rerank_topk: 3
 
 #generate
-generate_model: "Qwen/Qwen2.5-0.5B-Instruct"
 generate_config:
-  max_length: 1024      # 根据需要调整最大长度
-  num_return_sequences: 1
-  no_repeat_ngram_size: 2
-  top_p: 0.95
-  temperature: 0.9
-  num_beams: 3
-  early_stopping: true
+  max_tokens: 1024     # 控制生成的最大长度
+  temperature: 0.7    # 降低随机性，提高生成质量
+  top_p: 0.9     # 核采样参数
+  n: 1 # 仅生成一个答案
 # -------------------------------------------------Evaluation Settings------------------------------------------------#
 # Metrics to evaluate the result
 metrics:

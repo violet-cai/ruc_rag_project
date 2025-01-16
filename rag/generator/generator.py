@@ -1,50 +1,80 @@
-from typing import List
-
-import torch
+from typing import Dict, List
+from openai import OpenAI
 from rag.config.config import Config
-from transformers import AutoModelForCausalLM, AutoTokenizer
+
 
 
 class Generator:
     def __init__(self, config: Config):
-        self.tokenizer = AutoTokenizer.from_pretrained(config["generate_model"])
-        self.model = AutoModelForCausalLM.from_pretrained(config["generate_model"], torch_dtype=torch.float16)
-        self.prompt = config["generate_prompt"]
-        self.generate_cofig = config['generate_config']
+        self.config = config
 
-    def _build_prompt(self, query: str, reranked_list: List[str]) -> str:
-        prompt = self.prompt
-        prompt += f"问题: {query}\n参考文档:\n"
-        for ref in reranked_list:
-            prompt += f"- {ref}\n"
-        prompt += "\n答案是："
-        return prompt
+    def _build_messages(self, query: str, retrieval_results: List[Dict], historys: List[Dict]) -> List[dict]:
+        # 系统提示信息
+        messages = [
+            {
+                "role": "system",
+                "content": self.config["system_prompt"],
+            }
+        ]
 
-    def generate(self, query: str, reranked_list: List[str]) -> str:
-        if not query or not reranked_list:
-            return "No question or references provided."
-        prompt = self._build_prompt(query, reranked_list)
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = self.model.to(device)
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(device)
-        generate_config = self.generate_cofig
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                max_length=generate_config['max_length'],
-                num_return_sequences=generate_config['num_return_sequences'],
-                no_repeat_ngram_size=generate_config['no_repeat_ngram_size'],
-                top_p=generate_config['top_p'],
-                temperature=generate_config['temperature'],
-                num_beams=generate_config['num_beams'],
-                early_stopping=generate_config['early_stopping'],
-            )
-        generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        final_summary_start = "答案是："
-        final_summary_index = generated_text.find(final_summary_start)
-        final_summary = "\n\n"
-        if final_summary_index != -1:
-            final_summary = generated_text[final_summary_index + len(final_summary_start) :].strip()
-        else:
-            final_summary = "Could not generate a final summary."
-        return final_summary
+        # 添加 Few-Shot 示例
+        few_shot_examples = self.config["few_shot_examples"]
+        for example in few_shot_examples:
+            messages.append({"role": "user", "content": example["query"]})
+            messages.append({"role": "assistant", "content": example["answer"]})
+
+        # 添加历史对话
+        if historys:
+            for history in historys:
+                messages.append({"role": "user", "content": history["query"]})
+                messages.append({"role": "assistant", "content": history["answer"]})
+
+        # 构造当前 query 和检索结果
+        context_list = ""
+        for i, doc in enumerate(retrieval_results):
+            context = f"\n文档集 {i+1}:\n- {doc}\n"
+            print(context)
+            context_list += context
+
+        # Chain-of-Thought 提示
+        chain_of_thought_prompt = self.config["chain_of_thought_prompt"]
+        content_string = chain_of_thought_prompt.format(query=query, context_list=context_list)
+        
+        messages.append(
+            {
+                "role": "user",
+                "content": content_string,
+            }
+        )
+        return messages
+
+    def generate(self, query: str, retrieval_results: List[Dict], historys: List[Dict]) -> str:
+        """
+        调用千问模型 API 生成答案。
+        """
+        if not query or not retrieval_results:
+            return "No query or retrieval results provided."
+
+        # 构造 messages 数据结构
+        messages = self._build_messages(query, retrieval_results, historys)
+
+        # 使用成功的调用方式构造请求体
+        client = OpenAI(
+            api_key=self.config["api_key"],
+            base_url=self.config["base_url"],
+        )
+        generate_config = self.config["generate_config"]
+
+        # 调用千问模型的 chat API
+        completion = client.chat.completions.create(
+            model=self.config["llm_model"],
+            messages=messages,
+            max_tokens=generate_config['max_tokens'],  
+            temperature=generate_config["temperature"],  
+            top_p=generate_config["top_p"],  
+            n=generate_config["n"],  
+        )
+
+        # 提取生成的答案内容
+        generated_text = completion.choices[0].message.content.strip()
+        return generated_text
