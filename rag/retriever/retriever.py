@@ -6,7 +6,7 @@ import numpy as np
 from rag.config.config import Config
 from rag.database.utils import dense_search, sparse_search
 from dataprocess.dataloader import get_datasets, get_keywords, bing_search, baidu_search, get_docs
-from dataprocess.queryupdater import get_new_query_1
+from .utils import get_new_query_1
 from pymilvus import model
 
 
@@ -49,7 +49,7 @@ class Retriever:
         query_embedding = self.model([query])
         dense_retrieved_list, sparse_retrieved_list = self._get_retrieved_lists(query_embedding)
         docs = self._rrf(dense_retrieved_list, sparse_retrieved_list)
-        retrieved_docs.append(docs)
+        retrieved_docs.extend(docs)
         return retrieved_docs
 
     def retrieve_with_keywords(self, query: str) -> List[str]:
@@ -59,7 +59,7 @@ class Retriever:
         # 权重前5的关键词用于检索
         top_weighted_keywords = [kw for kw, weight in keywords_with_weights[:5]]
         for dataset in datasets:
-            retrieved_docs.append(self.keyword_retrieval(dataset, top_weighted_keywords))
+            retrieved_docs.extend(self.keyword_retrieval(dataset, top_weighted_keywords))
         return retrieved_docs
 
     def keyword_retrieval(self, dataset: dict, top_weighted_keywords: list) -> List[str]:
@@ -78,7 +78,7 @@ class Retriever:
                     doc_content = doc_content + document.get("answer", "")
                 keyword_docs.append((doc_content, matched_keywords_count))
         keyword_docs.sort(key=lambda x: x[1], reverse=True)
-        ret = (doc[0] for doc in keyword_docs[: self.topk])
+        ret = [doc[0] for doc in keyword_docs[: self.topk]]
         return ret
 
     def retrieve_with_engine(self, query: str, mode="bing") -> List[str]:

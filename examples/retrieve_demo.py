@@ -37,7 +37,6 @@ historys = [
 ]
 
 
-
 retriever = get_retriever(config)
 reranker = get_reranker(config)
 generator = get_generator(config)
@@ -52,7 +51,11 @@ def get_answer(query, historys):
     retrieved_list = retriever.retrieve(query)
     retrieved_list_keywords = retriever.retrieve_with_keywords(query)
     retrieved_list_engine = retriever.retrieve_with_engine(query)
+    
     reranked_list = reranker.rerank(query, retrieved_list)
+    reranked_list_keywords = reranker.rerank(query, retrieved_list_keywords)
+    reranked_list_engine = reranker.rerank(query, retrieved_list_engine)
+
     answer = generator.generate(query, reranked_list)
 
     history["answer"] = answer
