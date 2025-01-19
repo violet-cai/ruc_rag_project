@@ -3,9 +3,12 @@ from pydantic import BaseModel
 from typing import List, Dict
 import uvicorn
 import os,sys
+import time
 
 # 初始化 FastAPI 应用
 app = FastAPI()
+# 记录服务端启动时间
+START_TIME = time.time()
 class QueryRequest(BaseModel):
     query: str
     
@@ -113,6 +116,19 @@ async def get_answer_api(request: QueryRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/status")
+async def get_status():
+    """
+    返回服务端的当前状态
+    """
+    return {
+        "status": "running",
+        "uptime": time.time() - START_TIME,  # 服务端运行时间（秒）
+        "message": "服务端已启动并运行中"
+    }
+
 
 # 启动服务示例
 if __name__ == "__main__":

@@ -6,6 +6,8 @@
 .
 ├── data
 │   └── 存储知识库数据
+│—— dataprocess
+│   └── 数据处理相关代码
 ├── examples
 │   └── results
 │       └── 提供使用示例及结果展示
@@ -14,8 +16,6 @@
     │   └── 配置文件目录
     ├── database
     │   └── 数据库相关代码
-    ├── dataprocess
-    │   └── 数据处理相关代码
     ├── evaluator
     │   └── 评估相关代码
     ├── generator
@@ -64,6 +64,8 @@ pip install -r requirements.txt
   db_dense_index_type: "IVF_FLAT" # docker中可以使用该索引更快
   ```
 
+
+
 ## 使用示例
 
 ### 创建数据库
@@ -81,6 +83,23 @@ python examples/database_demo.py
 ```bash
 python examples/retrieve_demo.py
 ```
+
+### 使用服务端-客户端方式运行
+
+首先执行下列命令开启服务端：
+
+```bash
+python examples/server_demo.py
+```
+
+随后新建一个终端，在新终端窗口中执行下列命令开启服务端：
+
+```bash
+python examples/client_demo.py
+```
+
+示例代码中已经存放了一定的历史对话内容，用户可前往`server_demo.py`中查看，客户端开启后用户可在终端窗口输入query进行检索增强生成。
+
 
 ### 自定义修改
 

@@ -16,3 +16,5 @@ tqdm
 transformers
 lxml_html_clean
 pymilvus[model]
+fastapi
+uvicorn
