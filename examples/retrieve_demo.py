@@ -51,10 +51,13 @@ def get_answer(query, historys):
     retrieved_list = retriever.retrieve(query)
     retrieved_list_keywords = retriever.retrieve_with_keywords(query)
     retrieved_list_engine = retriever.retrieve_with_engine(query)
+    # 与其他retrieved_list合并重排
+    # retrieved_list = retrieved_list + retrieved_list_keywords
+    # retrieved_list = retrieved_list + retrieved_list_engine
     
+    print("retrieved list:", retrieved_list)
     reranked_list = reranker.rerank(query, retrieved_list)
-    reranked_list_keywords = reranker.rerank(query, retrieved_list_keywords)
-    reranked_list_engine = reranker.rerank(query, retrieved_list_engine)
+    print("reranked list:", reranked_list)
 
     answer = generator.generate(query, reranked_list, historys)
 

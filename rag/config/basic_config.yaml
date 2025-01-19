@@ -73,6 +73,12 @@ generate_config:
   temperature: 0.7    # 降低随机性，提高生成质量
   top_p: 0.9     # 核采样参数
   n: 1 # 仅生成一个答案
+
+# sever_client
+server_url: "http://127.0.0.1:8000"
+MAX_HISTORY_LENGTH: 100 # 存储的historys最大长度
+sever_host: "0.0.0.0"
+sever_port: 8000
 # -------------------------------------------------Evaluation Settings------------------------------------------------#
 # Metrics to evaluate the result
 metrics:
