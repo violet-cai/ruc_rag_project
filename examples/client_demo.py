@@ -11,7 +11,6 @@ config = Config()
 # 定义服务端地址
 SERVER_URL = config["server_url"]
 
-
 # 调用接口
 def _answer_api_show(query):
     url = f"{SERVER_URL}/get_answer_show"
@@ -43,7 +42,6 @@ def get_answer(query):
     """
     调用示例
     """
-    
     response = _answer_api_show(query)
     if response is None:
         print("回答问题出错，请检查服务端状态或查询内容。")

@@ -4,6 +4,7 @@ from typing import List, Dict
 import uvicorn
 import os,sys
 import time
+from pymilvus import connections
 
 # 初始化 FastAPI 应用
 app = FastAPI()
@@ -129,7 +130,31 @@ async def get_status():
         "message": "服务端已启动并运行中"
     }
 
+# 添加关闭服务端时的处理逻辑
+@app.on_event("shutdown")
+def shutdown_event():
+    """
+    服务端关闭时执行的操作
+    """
+    print("服务端正在关闭...")
+
+    # 关闭 Milvus 连接
+    print("关闭 Milvus 连接...")
+    connections.disconnect("default")  # 关闭默认连接
+
+    # 释放 retriever、reranker 和 generator 的资源
+    if hasattr(retriever, "close"):
+        print("释放 retriever 资源...")
+        retriever.close()
+    if hasattr(reranker, "close"):
+        print("释放 reranker 资源...")
+        reranker.close()
+    if hasattr(generator, "close"):
+        print("释放 generator 资源...")
+        generator.close()
+
+
 
 # 启动服务示例
 if __name__ == "__main__":
-    uvicorn.run(app, host=config["sever_host"], port=config["sever_port"])
+    uvicorn.run(app, host=config["server_host"], port=config["server_port"])

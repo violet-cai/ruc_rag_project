@@ -65,7 +65,6 @@ pip install -r requirements.txt
   ```
 
 
-
 ## 使用示例
 
 ### 创建数据库
@@ -86,6 +85,8 @@ python examples/retrieve_demo.py
 
 ### 使用服务端-客户端方式运行
 
+1. **服务端和客户端单独运行**:
+
 首先执行下列命令开启服务端：
 
 ```bash
@@ -97,6 +98,16 @@ python examples/server_demo.py
 ```bash
 python examples/client_demo.py
 ```
+
+
+2. **脚本一键运行**:
+
+`run_server_client.py`脚本中整合了运行服务端与客户端的代码，仅需执行下列命令即可一键运行服务：
+
+```bash
+python examples/run_server_client.py
+```
+
 
 示例代码中已经存放了一定的历史对话内容，用户可前往`server_demo.py`中查看，客户端开启后用户可在终端窗口输入query进行检索增强生成。
 

@@ -77,8 +77,10 @@ generate_config:
 # sever_client
 server_url: "http://127.0.0.1:8000"
 MAX_HISTORY_LENGTH: 100 # 存储的historys最大长度
-sever_host: "0.0.0.0"
-sever_port: 8000
+server_host: "0.0.0.0"
+server_port: 8000
+server_script: "examples/server_demo.py"
+client_script: "examples/client_demo.py"
 # -------------------------------------------------Evaluation Settings------------------------------------------------#
 # Metrics to evaluate the result
 metrics:
